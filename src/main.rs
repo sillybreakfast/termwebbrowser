@@ -65,7 +65,7 @@ async fn main() {
     site_name = site_name.trim().to_string();
     let fetched_site = match fetch_from_url(format!("https://raw.githubusercontent.com/sillybreakfast/termwebsites/refs/tags/{}/sites/{}.json", current_web_release_name, site_name).as_str()).await {
         Ok(response) => response,
-        Err(err) => String::from("{ \"title\": \"error\", \"content\": \"there was an error loading the site.\" }")
+        Err(_) => String::from("{ \"title\": \"error\", \"content\": \"there was an error loading the site.\" }")
     };
     let site_json: Value = serde_json::from_str(fetched_site.as_str()).unwrap();
     println!("\x1b[1m{}\x1b[0m", match site_json.get("title") {
