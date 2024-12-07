@@ -1,7 +1,11 @@
 [package]
 name = "termwebbrowser"
 version = "0.1.0"
+authors = ["sillybreakfast"]
 edition = "2021"
+description = "a termweb browser in the terminal. accesses termwebsites from https://github.com/sillybreakfast/termwebsites."
+readme = "README.md"
+repository = "https://github.com/sillybreakfast/termwebbrowser"
 
 [dependencies]
 reqwest = "0.12.9"
