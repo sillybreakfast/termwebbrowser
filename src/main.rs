@@ -1,5 +1,3 @@
-use reqwest::Url;
-
 async fn fetch_from_url(url: &str) -> reqwest::Result<String> {
     let response_text = reqwest::get(url).await?.text().await?;
     Ok(response_text)
