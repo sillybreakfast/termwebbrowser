@@ -1,3 +1,4 @@
+use std::io::stdin;
 use serde_json::Value;
 
 async fn fetch_from_url(url: &str) -> reqwest::Result<String> {
@@ -7,7 +8,9 @@ async fn fetch_from_url(url: &str) -> reqwest::Result<String> {
 
 #[tokio::main]
 async fn main() {
-    let fetched_site = match fetch_from_url("").await {
+    let mut site_name = String::new();
+    stdin().read_line(&mut site_name).unwrap().to_string().trim().parse::<String>().unwrap();
+    let fetched_site = match fetch_from_url(format!("https://raw.githubusercontent.com/sillybreakfast/termwebsites/refs/heads/master/sites/{}.json", site_name).as_str()).await {
         Ok(response) => response,
         Err(err) => format!("{{ \"title\": \"error\", \"content\": \"{:?}\" }}", err).as_str().to_owned()
     };
