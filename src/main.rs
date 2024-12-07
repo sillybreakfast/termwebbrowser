@@ -51,10 +51,19 @@ async fn fetch_from_url(url: &str) -> reqwest::Result<String> {
 
 #[tokio::main]
 async fn main() {
+    println!("\x1b[1mwelcome to termwebbrowser!\x1b[0m");
+    let client = reqwest::Client::builder().user_agent("sillybreakfast/termwebbrowser").build().unwrap();
+    let current_web_release = client.get("https://api.github.com/repos/sillybreakfast/termwebsites/releases/latest").send().await.unwrap().text().await.unwrap();
+    let current_web_release: Value = serde_json::from_str(current_web_release.as_str()).unwrap();
+    let current_web_release_name = match current_web_release.get("tag_name") {
+        Some(tag_name) => tag_name.as_str().unwrap(),
+        _ => "unknown"
+    };
+    println!("\x1b[2mtermwebsites \x1b[1m{}\x1b[0m", current_web_release_name);
     let mut site_name = String::new();
     stdin().read_line(&mut site_name).unwrap().to_string();
     site_name = site_name.trim().to_string();
-    let fetched_site = match fetch_from_url(format!("https://raw.githubusercontent.com/sillybreakfast/termwebsites/refs/heads/master/sites/{}.json", site_name).as_str()).await {
+    let fetched_site = match fetch_from_url(format!("https://raw.githubusercontent.com/sillybreakfast/termwebsites/refs/tags/{}/sites/{}.json", current_web_release_name, site_name).as_str()).await {
         Ok(response) => response,
         Err(err) => String::from("{ \"title\": \"error\", \"content\": \"there was an error loading the site.\" }")
     };
