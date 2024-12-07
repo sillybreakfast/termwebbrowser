@@ -5,8 +5,11 @@ async fn fetch_from_url(url: &str) -> reqwest::Result<String> {
 
 #[tokio::main]
 async fn main() {
-    match fetch_from_url("").await {
-        Ok(response) => println!("{}", response),
-        Err(err) => eprintln!("{:?}", err)
-    }
+    let fetched_site = match fetch_from_url("").await {
+        Ok(response) => response,
+        Err(err) => format!("{{ \"title\": \"error\", \"content\": \"{:?}\" }}", err).as_str().to_owned()
+    };
+    let site_json: serde_json::Value = serde_json::from_str(fetched_site.as_str()).unwrap();
+    println!("\x1b[1m{}\x1b[0m", site_json["title"].as_str().unwrap());
+    println!("{}", site_json["content"].as_str().unwrap());
 }
