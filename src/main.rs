@@ -63,12 +63,37 @@ async fn main() {
     println!("\x1b[2mtermwebsites    \x1b[1m{}\x1b[0m", current_web_release_name);
     let mut site_name = String::new();
     stdin().read_line(&mut site_name).unwrap().to_string();
-    site_name = format!("{}/", site_name.trim());
-    let fetched_site = match fetch_from_url(format!("https://raw.githubusercontent.com/sillybreakfast/termwebsites/refs/tags/{}/sites/{}.json", current_web_release_name, site_name).as_str()).await {
+    let site_name = site_name.trim();
+    let config = match fetch_from_url(format!("https://raw.githubusercontent.com/sillybreakfast/termwebsites/refs/tags/{}/sites/{}/config.json", current_web_release_name, site_name.split("/").collect::<Vec<_>>()[0]).as_str()).await {
+        Ok(response) => response,
+        Err(_) => String::from("{}")
+    };
+    let config: Value = match serde_json::from_str(config.as_str()) {
+        Ok(config) => config,
+        Err(_) => serde_json::from_str("{}").unwrap()
+    };
+    let routes: Value = match config.get("routes") {
+        Some(routes) => {match serde_json::from_str(&routes.to_string()) {
+            Ok(routes) => routes,
+            Err(_) => serde_json::from_str("{}").unwrap()
+        }},
+        _ => serde_json::from_str("{}").unwrap()
+    };
+    let route = match routes.get(format!("{}/", site_name).split('/').last().unwrap()) {
+        Some(route) => format!("https://raw.githubusercontent.com/sillybreakfast/termwebsites/refs/tags/{}/sites/{}/{}", current_web_release_name, site_name, route.as_str().unwrap()),
+        None => match config.get("routes") {
+            Some(_) => String::from("https://raw.githubusercontent.com/sillybreakfast/termwebsites/refs/heads/master/non_existent_file.json"),
+            None => format!("https://raw.githubusercontent.com/sillybreakfast/termwebsites/refs/tags/{}/sites/{}/index.json", current_web_release_name, site_name)
+        }
+    };
+    let fetched_site = match fetch_from_url(route.as_str()).await {
         Ok(response) => response,
         Err(_) => String::from("{ \"title\": \"error\", \"content\": \"there was an error loading the site.\" }")
     };
-    let site_json: Value = serde_json::from_str(fetched_site.as_str()).unwrap();
+    let site_json: Value = match serde_json::from_str(fetched_site.as_str()) {
+        Ok(site_json) => site_json,
+        Err(_) => serde_json::from_str("{ \"title\": \"error\", \"content\": \"there is a syntax error in the file that is preventing termwebbrowser from parsing it.\" }").unwrap()
+    };
     println!("\x1b[1m{}\x1b[0m", match site_json.get("title") {
         Some(title) => title.as_str().unwrap(),
         _ => "untitled"
