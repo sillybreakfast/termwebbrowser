@@ -1,4 +1,5 @@
 use std::io::stdin;
+use std::process::exit;
 use std::thread;
 use std::time::Duration;
 use serde_json::Value;
@@ -55,6 +56,7 @@ async fn fetch_from_url(url: &str) -> reqwest::Result<String> {
 async fn main() {
     println!("\x1b[1mwelcome to termwebbrowser!\x1b[0m");
     println!("\x1b[2mtermwebbrowser  \x1b[1m{}\x1b[0m", env!("CARGO_PKG_VERSION", "unknown"));
+    println!("\x1b[2mtermwebsites  \x1b[1mloading\x1b[0m");
     let client = reqwest::Client::builder().user_agent("sillybreakfast/termwebbrowser").build().unwrap();
     let current_web_release = client.get("https://api.github.com/repos/sillybreakfast/termwebsites/releases/latest").send().await.unwrap().text().await.unwrap();
     let current_web_release: Value = serde_json::from_str(current_web_release.as_str()).unwrap();
@@ -62,7 +64,12 @@ async fn main() {
         Some(tag_name) => tag_name.as_str().unwrap(),
         _ => "unknown"
     };
-    println!("\x1b[2mtermwebsites    \x1b[1m{}\x1b[0m", current_web_release_name);
+    println!("\x1b[1A\x1b[2mtermwebsites    \x1b[1m{}\x1b[0m", current_web_release_name);
+    if current_web_release_name == "unknown" {
+        println!("\x1b[1myou're offline\x1b[0m");
+        println!("check your internet connection and try again.");
+        exit(1);
+    }
     let mut site_name = String::new();
     stdin().read_line(&mut site_name).unwrap().to_string();
     let site_name = site_name.trim();
