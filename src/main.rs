@@ -1,4 +1,6 @@
 use std::io::stdin;
+use std::thread;
+use std::time::Duration;
 use serde_json::Value;
 
 async fn fetch_from_url(url: &str) -> reqwest::Result<String> {
@@ -64,6 +66,19 @@ async fn main() {
     let mut site_name = String::new();
     stdin().read_line(&mut site_name).unwrap().to_string();
     let site_name = site_name.trim();
+    thread::spawn(|| {
+        let loading_anim = "⣾⣽⣻⢿⡿⣟⣯⣷";
+        println!();
+        loop {
+            for i in 0..loading_anim.chars().count()-1 {
+                    println!("\x1b[1A{} loading...", match loading_anim.chars().collect::<Vec<_>>().get(i) {
+                        Some(char) => char,
+                        _ => &' '
+                    });
+                    thread::sleep(Duration::from_millis(50));
+            }
+        }
+    });
     let config = match fetch_from_url(format!("https://raw.githubusercontent.com/sillybreakfast/termwebsites/refs/tags/{}/sites/{}/config.json", current_web_release_name, site_name.split("/").collect::<Vec<_>>()[0]).as_str()).await {
         Ok(response) => response,
         Err(_) => String::from("{}")
@@ -94,6 +109,7 @@ async fn main() {
         Ok(site_json) => site_json,
         Err(_) => serde_json::from_str("{ \"title\": \"error\", \"content\": \"there is a syntax error in the file that is preventing termwebbrowser from parsing it.\" }").unwrap()
     };
+    print!("\x1b[1A\x1b[J");
     println!("\x1b[1m{}\x1b[0m", match site_json.get("title") {
         Some(title) => title.as_str().unwrap(),
         _ => "untitled"
